@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myweb-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myweb-app
+  template:
+    metadata:
+      labels:
+        app: myweb-app
+    spec:
+      containers:
+      - name: web
+        image: mywebacr.azurecr.io/myweb-app:latest
+        ports:
+        - containerPort: 80

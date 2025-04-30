@@ -1,38 +1,49 @@
 pipeline {
     agent any
-
     environment {
-        DOCKER_IMAGE = 'myweb-app'
-        ACR_NAME = 'mywebacr'
-        AKS_NAMESPACE = 'myweb-ns'
-        DEPLOYMENT_NAME = 'myweb-deployment'
-        SERVICE_NAME = 'myweb-service'
+        ACR_NAME = "mywebacr"                  // Your ACR name
+        DOCKER_IMAGE = "myweb-app"              // Your image name
+        AKS_NAMESPACE = "myweb-ns"              // K8s namespace
     }
 
     stages {
-        stage('Checkout') {
+        // STAGE 1: Checkout with GitHub PAT
+        stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/mulukelem/solapp-cicd-poc.git', branch: 'main'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: 'main']],
+                    extensions: [
+                        [$class: 'CleanBeforeCheckout'],
+                        [$class: 'CloneOption', depth: 1, shallow: true]
+                    ],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/mulukelem/myweb-cicd.git',  // Your repo
+                        credentialsId: 'github-pat'  // 🚨 MATCHES JENKINS CREDENTIAL ID
+                    ]]
+                ])
             }
         }
 
-        stage('Build & Push') {
+        // STAGE 2: Build & Push to ACR
+        stage('Build and Push') {
             steps {
-                script {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'acr-credentials',
-                        usernameVariable: 'ACR_USER',
-                        passwordVariable: 'ACR_PASS'
-                    )]) {
-                        sh "docker build -t ${ACR_NAME}.azurecr.io/${DOCKER_IMAGE}:latest ./src"
-                        sh "docker login ${ACR_NAME}.azurecr.io -u ${ACR_USER} -p ${ACR_PASS}"
-                        sh "docker push ${ACR_NAME}.azurecr.io/${DOCKER_IMAGE}:latest"
-                    }
+                withCredentials([usernamePassword(
+                    credentialsId: 'acr-credentials',
+                    usernameVariable: 'ACR_USER',
+                    passwordVariable: 'ACR_PASS'
+                )]) {
+                    sh """
+                        docker build -t ${ACR_NAME}.azurecr.io/${DOCKER_IMAGE}:latest ./src
+                        docker login ${ACR_NAME}.azurecr.io -u $ACR_USER -p $ACR_PASS
+                        docker push ${ACR_NAME}.azurecr.io/${DOCKER_IMAGE}:latest
+                    """
                 }
             }
         }
 
-        stage('Deploy') {
+        // STAGE 3: Deploy to AKS
+        stage('Deploy to AKS') {
             steps {
                 withCredentials([azureServicePrincipal(
                     credentialsId: 'azure-credentials',
@@ -42,8 +53,14 @@ pipeline {
                     tenantIdVariable: 'AZURE_TENANT_ID'
                 )]) {
                     sh """
-                        az login --service-principal -u \$AZURE_CLIENT_ID -p \$AZURE_CLIENT_SECRET --tenant \$AZURE_TENANT_ID
-                        az aks get-credentials --resource-group myweb-rg --name myweb-aks --overwrite-existing
+                        az login --service-principal \
+                            -u \$AZURE_CLIENT_ID \
+                            -p \$AZURE_CLIENT_SECRET \
+                            --tenant \$AZURE_TENANT_ID
+                        az aks get-credentials \
+                            --resource-group myweb-rg \
+                            --name myweb-aks \
+                            --overwrite-existing
                         kubectl apply -f k8s/deployment.yaml -n ${AKS_NAMESPACE}
                         kubectl apply -f k8s/service.yaml -n ${AKS_NAMESPACE}
                     """
@@ -51,4 +68,120 @@ pipeline {
             }
         }
     }
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
 }

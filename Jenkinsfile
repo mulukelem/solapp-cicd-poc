@@ -1,13 +1,17 @@
 pipeline {
     agent any
     environment {
-        ACR_NAME = "mywebacr"                  // Your ACR name
-        DOCKER_IMAGE = "myweb-app"              // Your image name
-        AKS_NAMESPACE = "myweb-ns"              // K8s namespace
+        // Customizable Variables
+        ACR_NAME          = 'mywebacr'           // Your Azure Container Registry name
+        DOCKER_IMAGE      = 'myweb-app'          // Your Docker image name
+        AKS_NAMESPACE     = 'myweb-ns'           // Kubernetes namespace
+        RESOURCE_GROUP    = 'myweb-rg'           // Azure resource group
+        AKS_CLUSTER       = 'myweb-aks'          // AKS cluster name
+        GIT_REPO          = 'https://github.com/mulukelem/solapp-cicd-poc.git'  // Your repo URL
     }
 
     stages {
-        // STAGE 1: Checkout with GitHub PAT
+        // Stage 1: Secure Code Checkout with GitHub PAT
         stage('Checkout Code') {
             steps {
                 checkout([
@@ -18,15 +22,16 @@ pipeline {
                         [$class: 'CloneOption', depth: 1, shallow: true]
                     ],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/mulukelem/solapp-cicd-poc.git',  // Your repo
-                        credentialsId: 'github-pat'  // 🚨 MATCHES JENKINS CREDENTIAL ID
+                        url: "${GIT_REPO}",
+                        credentialsId: 'github-pat'  // Jenkins credential for GitHub PAT
                     ]]
                 ])
+                sh 'echo "✅ Code checkout completed"'
             }
         }
 
-        // STAGE 2: Build & Push to ACR
-        stage('Build and Push') {
+        // Stage 2: Docker Build & Push to ACR
+        stage('Build and Push to ACR') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'acr-credentials',
@@ -35,14 +40,15 @@ pipeline {
                 )]) {
                     sh """
                         docker build -t ${ACR_NAME}.azurecr.io/${DOCKER_IMAGE}:latest ./src
-                        docker login ${ACR_NAME}.azurecr.io -u $ACR_USER -p $ACR_PASS
+                        echo ${ACR_PASS} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USER} --password-stdin
                         docker push ${ACR_NAME}.azurecr.io/${DOCKER_IMAGE}:latest
                     """
                 }
+                sh 'echo "✅ Image built and pushed to ACR"'
             }
         }
 
-        // STAGE 3: Deploy to AKS
+        // Stage 3: Deploy to AKS with Namespace Automation
         stage('Deploy to AKS') {
             steps {
                 withCredentials([azureServicePrincipal(
@@ -53,19 +59,51 @@ pipeline {
                     tenantIdVariable: 'AZURE_TENANT_ID'
                 )]) {
                     sh """
+                        # Azure Authentication
                         az login --service-principal \
                             -u \$AZURE_CLIENT_ID \
                             -p \$AZURE_CLIENT_SECRET \
                             --tenant \$AZURE_TENANT_ID
+
+                        # Get AKS credentials
                         az aks get-credentials \
-                            --resource-group myweb-rg \
-                            --name myweb-aks \
+                            --resource-group ${RESOURCE_GROUP} \
+                            --name ${AKS_CLUSTER} \
                             --overwrite-existing
+
+                        # Create namespace if not exists (idempotent)
+                        kubectl create namespace ${AKS_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+
+                        # Deploy application
                         kubectl apply -f k8s/deployment.yaml -n ${AKS_NAMESPACE}
                         kubectl apply -f k8s/service.yaml -n ${AKS_NAMESPACE}
+
+                        # Verify deployment
+                        kubectl rollout status deployment/myweb-deployment -n ${AKS_NAMESPACE} --timeout=90s
                     """
                 }
+                sh 'echo "✅ Application deployed to AKS"'
             }
+        }
+    }
+
+    post {
+        success {
+            slackSend(
+                channel: '#deployments',
+                message: "SUCCESS: Deployment ${env.BUILD_URL} completed"
+            )
+        }
+        failure {
+            slackSend(
+                channel: '#alerts',
+                color: 'danger',
+                message: "FAILED: Build ${env.BUILD_URL} \nError: ${currentBuild.currentResult}"
+            )
+        }
+        always {
+            sh 'docker logout ${ACR_NAME}.azurecr.io || true'
+            cleanWs()
         }
     }
 }

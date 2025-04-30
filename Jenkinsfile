@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/mulukelem/myweb-cicd.git', branch: 'main'
+                git url: 'https://github.com/mulukelem/solapp-cicd-poc.git', branch: 'main'
             }
         }
 

@@ -80,30 +80,26 @@ pipeline {
 
                         # Verify deployment
                         kubectl rollout status deployment/myweb-deployment -n ${AKS_NAMESPACE} --timeout=90s
+                        
+                        # Print application URL
+                        echo "Application deployed successfully!"
+                        echo "Access URL: http://\$(kubectl get svc myweb-service -n ${AKS_NAMESPACE} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
                     """
                 }
-                sh 'echo "✅ Application deployed to AKS"'
             }
         }
     }
 
     post {
-        success {
-            slackSend(
-                channel: '#deployments',
-                message: "SUCCESS: Deployment ${env.BUILD_URL} completed"
-            )
-        }
-        failure {
-            slackSend(
-                channel: '#alerts',
-                color: 'danger',
-                message: "FAILED: Build ${env.BUILD_URL} \nError: ${currentBuild.currentResult}"
-            )
-        }
         always {
+            // Cleanup Docker credentials
             sh 'docker logout ${ACR_NAME}.azurecr.io || true'
             cleanWs()
+            
+            // Print final status
+            script {
+                echo "Pipeline ${currentBuild.result ?: 'SUCCESS'}"
+            }
         }
     }
 }

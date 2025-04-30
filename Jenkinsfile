@@ -18,7 +18,7 @@ pipeline {
                         [$class: 'CloneOption', depth: 1, shallow: true]
                     ],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/mulukelem/myweb-cicd.git',  // Your repo
+                        url: 'https://github.com/mulukelem/solapp-cicd-poc.git',  // Your repo
                         credentialsId: 'github-pat'  // 🚨 MATCHES JENKINS CREDENTIAL ID
                     ]]
                 ])

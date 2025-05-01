@@ -79,7 +79,7 @@ pipeline {
                         kubectl apply -f k8s/service.yaml -n ${AKS_NAMESPACE}
 
                         # Verify deployment
-                      #  kubectl rollout status deployment/myweb-deployment -n ${AKS_NAMESPACE} --timeout=90s
+                        kubectl rollout status deployment/myweb-deployment -n ${AKS_NAMESPACE} --timeout=90s
                         
                         # Print application URL
                         echo "Application deployed successfully!"

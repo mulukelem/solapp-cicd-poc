@@ -22,8 +22,9 @@ sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 # Install Azure CLI
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
 ## Architecture Diagram
-![AKS Deployment Architecture](docs/architecture.png)
+<img src="docs/architecture.png" alt="AKS Deployment Architecture" width="600"/>
 
 ## File Structure
 solapp-cicd-poc/
@@ -60,8 +61,9 @@ az acr create \
   --resource-group myweb-poc-rg \
   --name mywebpocacr \
   --sku Basic
+
 2. Configure Access
-bash
+
 # Attach ACR to AKS
 az aks update \
   -g myweb-poc-rg \

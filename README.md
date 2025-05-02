@@ -26,11 +26,6 @@ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 ## Architecture Diagram
 ![AKS Deployment Architecture](https://github.com/mulukelem/solapp-cicd-poc/raw/main/docs/architecture.png)
 
-<figure>
-  <img src="docs/architecture.svg" alt="AKS Deployment Flow"/>
-  <figcaption>Fig.1 - CI/CD Pipeline Architecture</figcaption>
-</figure>
-
 ## File Structure
 solapp-cicd-poc/
 ├── .gitignore
@@ -146,6 +141,12 @@ kubectl get all -n myweb-poc-ns
 2. Access Application
 kubectl port-forward svc/myweb-service -n myweb-poc-ns 8080:80
 Access: http://localhost:8080
+
+## Verify Deployment and get External IP to test the app
+![Deployment Verification](https://github.com/mulukelem/solapp-cicd-poc/raw/main/docs/verification.png)
+
+## Test the app using External IP
+![APP Deployment Test](https://github.com/mulukelem/solapp-cicd-poc/raw/main/docs/webapp.png)
 
 3. Smoke Test
 curl -v http://<EXTERNAL-IP>

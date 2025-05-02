@@ -24,7 +24,7 @@ sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
 ## Architecture Diagram
-<img src="docs/architecture.png" alt="AKS Deployment Architecture" width="600"/>
+![AKS Deployment Architecture](https://github.com/mulukelem/solapp-cicd-poc/raw/main/docs/architecture.png)
 
 ## File Structure
 solapp-cicd-poc/

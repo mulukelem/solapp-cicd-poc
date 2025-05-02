@@ -1,17 +1,6 @@
 markdown
 # Web Deployment to AKS using Jenkins - POC
-
-## Table of Contents
-1. [Prerequisites](#prerequisites)
-2. [Architecture](#architecture)
-3. [Setup Steps](#setup-steps)
-4. [Jenkins Pipeline](#jenkins-pipeline)
-5. [Testing Procedure](#testing-procedure)
-6. [Troubleshooting](#troubleshooting)
-7. [Cleanup](#cleanup)
-
 ---
-
 ## Prerequisites
 
 ### Infrastructure
@@ -33,14 +22,28 @@ sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 # Install Azure CLI
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-Architecture
-Diagram
-Code
+## Architecture Diagram
+![AKS Deployment Architecture](docs/architecture.png)
+
+## File Structure
+solapp-cicd-poc/
+├── .gitignore
+├── README.md
+├── Jenkinsfile
+├── k8s/
+│   ├── deployment.yaml
+│   ├── service.yaml
+├── src/
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── Dockerfile
+└── docs/
+    └── architecture.png
 
 
 Setup Steps
 1. Create Azure Resources
-bash
+
 # Create resource group
 az group create --name myweb-poc-rg --location eastus
 
@@ -70,9 +73,11 @@ az aks get-credentials \
   -g myweb-poc-rg \
   -n myweb-poc-aks \
   --overwrite-existing
+
 Jenkins Pipeline
+
 1. Create Jenkinsfile
-groovy
+
 pipeline {
     agent any
     environment {
@@ -111,6 +116,7 @@ pipeline {
         }
     }
 }
+
 2. Jenkins Credentials
 ACR Credentials:
 
@@ -120,7 +126,7 @@ Username: ACR name (mywebpocacr)
 
 Password: From az acr credential show
 
-Azure SP Credentials (Optional for deployments):
+Azure SP Credentials (for deployments):
 
 ID: azure-credentials
 
@@ -128,21 +134,20 @@ Service Principal details
 
 Testing Procedure
 1. Verify Deployment
-bash
 kubectl get all -n myweb-poc-ns
+
 2. Access Application
-bash
 kubectl port-forward svc/myweb-service -n myweb-poc-ns 8080:80
 Access: http://localhost:8080
 
 3. Smoke Test
-bash
 curl -v http://<EXTERNAL-IP>
+
 Troubleshooting
 Error	Solution
 ImagePullBackOff	Check az aks update --attach-acr
 CrashLoopBackOff	Check logs with kubectl logs --previous
 403 Forbidden	Verify ACR credentials
+
 Cleanup
-bash
 az group delete --name myweb-poc-rg --yes --no-wait

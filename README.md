@@ -31,6 +31,8 @@ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
   <figcaption>Fig.1 - CI/CD Pipeline Architecture</figcaption>
 </figure>
 
+![AKS Deployment Architecture](docs/architecture.png)
+
 ## File Structure
 solapp-cicd-poc/
 ├── .gitignore
